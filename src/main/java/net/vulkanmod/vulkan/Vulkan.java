@@ -405,8 +405,9 @@ public class Vulkan {
 
             PointerBuffer pDevice = stack.pointers(VK_NULL_HANDLE);
 
-            if(vkCreateDevice(physicalDevice, createInfo, null, pDevice) != VK_SUCCESS) {
-                throw new RuntimeException("Failed to create logical device");
+            int result = vkCreateDevice(physicalDevice, createInfo, null, pDevice);
+            if(result != VK_SUCCESS) {
+                throw new RuntimeException("Failed to create logical device: " + result);
             }
 
             device = new VkDevice(pDevice.get(0), physicalDevice, createInfo);
