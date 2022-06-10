@@ -436,7 +436,9 @@ public class Vulkan {
             allocatorCreateInfo.physicalDevice(physicalDevice);
             allocatorCreateInfo.device(device);
             allocatorCreateInfo.pVulkanFunctions(vulkanFunctions);
-            allocatorCreateInfo.instance(instance);
+            try {
+                allocatorCreateInfo.instance(instance);
+            } catch (NoSuchMethodError e) {}
 
             PointerBuffer pAllocator = stack.pointers(VK_NULL_HANDLE);
 
