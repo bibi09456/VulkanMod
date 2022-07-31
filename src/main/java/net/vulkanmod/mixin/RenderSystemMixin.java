@@ -3,6 +3,7 @@ package net.vulkanmod.mixin;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderCall;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.systems.RenderSystem.IndexBuffer;
 import net.vulkanmod.interfaces.VAbstractTextureI;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Shader;
@@ -250,12 +251,12 @@ public abstract class RenderSystemMixin {
     }
 
     /**
-     * @author
-     */
-    @Overwrite
-    public static void blendFunc(int srcFactor, int dstFactor) {
-        Drawer.currentBlendState = new Pipeline.BlendState(srcFactor, dstFactor, srcFactor, dstFactor);
-    }
+      * @author
+      */
+     @Overwrite
+     public static void blendFunc(int srcFactor, int dstFactor) {
+         Drawer.currentBlendState = new Pipeline.BlendState(srcFactor, dstFactor, srcFactor, dstFactor);
+     }
 
     /**
      * @author
@@ -466,6 +467,4 @@ public abstract class RenderSystemMixin {
         VRenderSystem.applyProjectionMatrix(projectionMatrix);
         VRenderSystem.calculateMVP();
     }
-
-
 }

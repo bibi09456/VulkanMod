@@ -31,7 +31,8 @@ public class EnchantmentScreenM extends HandledScreen<EnchantmentScreenHandler> 
 
     @Shadow private BookModel BOOK_MODEL;
 
-    @Shadow @Final private static Identifier BOOK_TEXTURE;
+    @Shadow @Final
+    private static Identifier BOOK_TEXTURE;
 
     @Shadow public float pageAngle;
 

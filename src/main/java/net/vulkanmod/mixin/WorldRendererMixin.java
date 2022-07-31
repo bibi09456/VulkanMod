@@ -183,7 +183,7 @@ public abstract class WorldRendererMixin {
                 VRenderSystem.setChunkOffset((float)((double)blockpos.getX() - d), (float)((double)blockpos.getY() - e), (float)((double)blockpos.getZ() - f));
                 drawer.pushConstants(pipeline);
 
-                vertexbuffer.drawVertices();
+                vertexbuffer.drawElements();
                 flag1 = true;
 
                 //debug

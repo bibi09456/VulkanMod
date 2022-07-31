@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(VertexBuffer.class)
@@ -21,6 +22,16 @@ public class VertexBufferM {
         vbo = new VBO();
     }
 
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/GlStateManager;_glGenBuffers()I"))
+    private int doNothing() {
+        return 0;
+    }
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/GlStateManager;_glGenVertexArrays()I"))
+    private int doNothing2() {
+        return 0;
+    }
+
     /**
      * @author
      */
@@ -31,8 +42,13 @@ public class VertexBufferM {
      * @author
      */
     @Overwrite
-    private void uploadInternal(BufferBuilder buffer) {
-        //TODO
+    public static void unbind() {}
+
+    /**
+     * @author
+     */
+    @Overwrite
+    public void upload(BufferBuilder.BuiltBuffer buffer) {
         vbo.upload_(buffer);
     }
 
@@ -40,7 +56,7 @@ public class VertexBufferM {
      * @author
      */
     @Overwrite
-    public void innerSetShader(Matrix4f viewMatrix, Matrix4f projectionMatrix, Shader shader) {
+    public void drawInternal(Matrix4f viewMatrix, Matrix4f projectionMatrix, Shader shader) {
         vbo._drawWithShader(viewMatrix, projectionMatrix, shader);
     }
 
@@ -48,7 +64,7 @@ public class VertexBufferM {
      * @author
      */
     @Overwrite
-    public void drawVertices() {
+    public void drawElements() {
         vbo.drawChunkLayer();
     }
 

@@ -294,7 +294,7 @@ public class Drawer {
                 recreateSwapChain();
                 return;
             } else if(vkResult != VK_SUCCESS) {
-                throw new RuntimeException("Cannot get image: " + vkResult);
+                throw new RuntimeException("Cannot get image");
             }
 
             final int imageIndex = pImageIndex.get(0);
@@ -398,7 +398,7 @@ public class Drawer {
     }
 
     private void drawAutoIndexed(ByteBuffer buffer, VertexBuffer vertexBuffer, IndexBuffer indexBuffer, int drawMode, VertexFormat vertexFormat, int vertexCount) {
-        vertexBuffer.copyToVertexBuffer(vertexFormat.getVertexSize(), vertexCount, buffer);
+        vertexBuffer.copyToVertexBuffer(vertexFormat.getVertexSizeByte(), vertexCount, buffer);
 
         Pipeline boundPipeline = ((ShaderMixed)(RenderSystem.getShader())).getPipeline();
         usedPipelines.add(boundPipeline);

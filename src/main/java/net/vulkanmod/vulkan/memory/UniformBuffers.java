@@ -14,6 +14,8 @@ import static org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 
 public class UniformBuffers {
 
+
+
     private int bufferSize;
     private int usedBytes;
 

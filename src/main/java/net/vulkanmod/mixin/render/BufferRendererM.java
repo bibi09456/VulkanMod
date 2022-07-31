@@ -1,13 +1,11 @@
 package net.vulkanmod.mixin.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.VertexFormat;
 import net.vulkanmod.vulkan.Drawer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-
-import java.nio.ByteBuffer;
 
 @Mixin(BufferRenderer.class)
 public class BufferRendererM {
@@ -22,12 +20,14 @@ public class BufferRendererM {
      * @author
      */
     @Overwrite
-    private static void draw(ByteBuffer buffer, VertexFormat.DrawMode drawMode, VertexFormat vertexFormat, int count, VertexFormat.IntType elementFormat, int vertexCount, boolean textured) {
+    public static void drawWithShader(BufferBuilder.BuiltBuffer buffer) {
         RenderSystem.assertOnRenderThread();
-        buffer.clear();
+        buffer.release();
+
+        BufferBuilder.DrawArrayParameters parameters = buffer.getParameters();
 
         int glMode;
-        switch (drawMode) {
+        switch (parameters.mode()) {
             case QUADS:
             case LINES:
                 glMode = 7;
@@ -47,7 +47,7 @@ public class BufferRendererM {
 //      Drawer.setProjectionMatrix(RenderSystem.getProjectionMatrix());
 
         Drawer drawer = Drawer.getInstance();
-        drawer.draw(buffer, glMode, vertexFormat, count);
+        drawer.draw(buffer.getVertexBuffer(), glMode, parameters.format(), parameters.vertexCount());
     }
 
 

@@ -10,6 +10,8 @@ import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormatElement;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
+import net.vulkanmod.vulkan.ShaderSPIRVUtils.SPIRV;
+import net.vulkanmod.vulkan.ShaderSPIRVUtils.ShaderKind;
 import net.vulkanmod.vulkan.memory.MemoryManager;
 import net.vulkanmod.vulkan.memory.UniformBuffers;
 import net.vulkanmod.vulkan.shader.Field;
@@ -401,7 +403,7 @@ public class Pipeline {
                 VkVertexInputBindingDescription.callocStack(1);
 
         bindingDescription.binding(0);
-        bindingDescription.stride(vertexFormat.getVertexSize());
+        bindingDescription.stride(vertexFormat.getVertexSizeByte());
         bindingDescription.inputRate(VK_VERTEX_INPUT_RATE_VERTEX);
 
         return bindingDescription;
@@ -412,9 +414,9 @@ public class Pipeline {
         ImmutableList<VertexFormatElement> elements = vertexFormat.getElements();
 
         int size = elements.size();
-        if(elements.stream().anyMatch(vertexFormatElement -> vertexFormatElement.getType() == VertexFormatElement.Type.PADDING)) {
-            size--;
-        }
+//        if(elements.stream().anyMatch(vertexFormatElement -> vertexFormatElement.getType() == VertexFormatElement.Type.PADDING)) {
+//            size--;
+//        }
 
         VkVertexInputAttributeDescription.Buffer attributeDescriptions =
                 VkVertexInputAttributeDescription.callocStack(size);
@@ -445,13 +447,13 @@ public class Pipeline {
             }
             else if (type == VertexFormatElement.Type.UV)
             {
-                if(elements.get(i).getDataType() == VertexFormatElement.DataType.FLOAT){
+                if(elements.get(i).getComponentType() == VertexFormatElement.ComponentType.FLOAT){
                     posDescription.format(VK_FORMAT_R32G32_SFLOAT);
                     posDescription.offset(offset);
 
                     offset += 8;
                 }
-                else if(elements.get(i).getDataType() == VertexFormatElement.DataType.SHORT){
+                else if(elements.get(i).getComponentType() == VertexFormatElement.ComponentType.SHORT){
                     posDescription.format(VK_FORMAT_R16G16_SINT);
                     posDescription.offset(offset);
 
@@ -460,15 +462,15 @@ public class Pipeline {
             }
             else if (type == VertexFormatElement.Type.NORMAL)
             {
-//                posDescription.format(VK_FORMAT_R8G8B8_UNORM);
-                posDescription.format(VK_FORMAT_R8G8B8A8_SNORM);
+                posDescription.format(VK_FORMAT_R8G8B8_SNORM);
+//                posDescription.format(VK_FORMAT_R8G8B8A8_SNORM);
                 posDescription.offset(offset);
 
                 offset += 3;
             }
             else if (type == VertexFormatElement.Type.PADDING)
             {
-//                posDescription.format(VK_FORMAT_R8_UNORM);
+                posDescription.format(VK_FORMAT_R8_SNORM);
 //                posDescription.offset(offset);
 
                 offset += 1;

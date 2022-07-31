@@ -16,7 +16,7 @@ public class WindowFramebufferMixin extends Framebuffer {
      * @author
      */
     @Overwrite
-    private void initSize(int width, int height) {
+    private void init(int width, int height) {
 
         this.viewportWidth = width;
         this.viewportHeight = height;

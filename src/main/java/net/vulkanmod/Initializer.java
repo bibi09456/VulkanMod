@@ -8,7 +8,6 @@ import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
 import net.fabricmc.fabric.impl.renderer.RendererAccessImpl;
 import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.util.Identifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,7 +19,6 @@ import static org.objectweb.asm.Opcodes.*;
 
 public class Initializer implements ModInitializer {
 	public static final Logger LOGGER = LogManager.getLogger("VulkanMod");
-
 	private static String VERSION;
 
 	@Override

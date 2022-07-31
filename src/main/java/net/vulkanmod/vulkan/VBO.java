@@ -1,5 +1,7 @@
 package net.vulkanmod.vulkan;
 
+import com.mojang.blaze3d.platform.GlConst;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
 import net.fabricmc.api.EnvType;
@@ -16,123 +18,44 @@ import java.nio.ByteBuffer;
 public class VBO {
     private VertexBuffer vertexBuffer;
     private IndexBuffer indexBuffer;
-    private VertexFormat.IntType indexType;
+    private VertexFormat.IndexType indexType;
     private int indexCount;
     private int vertexCount;
     private VertexFormat.DrawMode mode;
     private boolean sequentialIndices;
-    private VertexFormat format;
-    private int offset;
+    private VertexFormat vertexFormat;
 
     private boolean autoIndexed = false;
 
     public VBO() {}
 
-    //TODO
-    public void upload_(BufferBuilder p_85936_) {
-        Pair<BufferBuilder.DrawArrayParameters, ByteBuffer> pair = p_85936_.popData();
+    public void upload_(BufferBuilder.BuiltBuffer buffer) {
+        BufferBuilder.DrawArrayParameters parameters = buffer.getParameters();
 
-        //BufferUploader.reset();
-        BufferBuilder.DrawArrayParameters parameters = pair.getFirst();
-        ByteBuffer bytebuffer = pair.getSecond();
-        int i = parameters.getIndexBufferStart();
-        this.indexCount = parameters.getVertexCount();
-        this.vertexCount = parameters.getCount();
-        this.indexType = parameters.getElementFormat();
-        this.format = parameters.getVertexFormat();
-        this.mode = parameters.getMode();
-        this.sequentialIndices = parameters.hasNoIndexBuffer();
+        this.indexCount = parameters.indexCount();
+        this.vertexCount = parameters.vertexCount();
+        this.indexType = parameters.indexType();
+        this.mode = parameters.mode();
 
-        if (!parameters.hasNoVertexBuffer() && vertexCount > 0) {
-            bytebuffer.limit(i);
+        this.configureVertexFormat(parameters, buffer.getVertexBuffer());
+        this.configureIndexBuffer(parameters, buffer.getIndexBuffer());
 
-            if(vertexBuffer != null) MemoryManager.addToFreeable(vertexBuffer);
-            vertexBuffer = new VertexBuffer(i, MemoryTypes.GPU_MEM);
-            vertexBuffer.copyToVertexBuffer(format.getVertexSize(), this.vertexCount, bytebuffer);
-
-            bytebuffer.position(i);
-        }
-
-        if (!this.sequentialIndices) {
-
-            if(parameters.hasNoVertexBuffer()) {
-
-                bytebuffer.limit(indexCount * indexType.size);
-
-                if(indexBuffer != null) MemoryManager.addToFreeable(indexBuffer);
-                indexBuffer = new IndexBuffer(bytebuffer.remaining(), MemoryTypes.GPU_MEM); // Short size
-                indexBuffer.copyBuffer(bytebuffer);
-
-                return;
-
-            }
-
-            bytebuffer.limit(parameters.getIndexBufferEnd());
-
-            if(indexBuffer != null) MemoryManager.addToFreeable(indexBuffer);
-            indexBuffer = new IndexBuffer(bytebuffer.remaining(), MemoryTypes.GPU_MEM); // Short size
-            indexBuffer.copyBuffer(bytebuffer);
-
-            bytebuffer.position(0);
-        } else {
-
-            if (vertexCount <= 0) {
-                return;
-            }
-
-            AutoIndexBuffer autoIndexBuffer;
-            if(this.mode != VertexFormat.DrawMode.TRIANGLE_FAN) {
-                autoIndexBuffer = Drawer.getInstance().getQuadsIndexBuffer();
-            } else {
-                autoIndexBuffer = Drawer.getInstance().getTriangleFanIndexBuffer();
-                this.indexCount = (vertexCount - 2) * 3;
-            }
-            autoIndexBuffer.checkCapacity(vertexCount);
-            indexBuffer = autoIndexBuffer.getIndexBuffer();
-            this.autoIndexed = true;
-
-            bytebuffer.limit(i);
-            bytebuffer.position(0);
-        }
+        buffer.release();
 
     }
 
-//    public void upload_(BufferBuilder bufferBuilder) {
-//        Pair<BufferBuilder.DrawArrayParameters, ByteBuffer> pair = bufferBuilder.popData();
-//
-//        //BufferUploader.reset();
-//        BufferBuilder.DrawArrayParameters parameters = pair.getFirst();
-//        ByteBuffer bytebuffer = pair.getSecond();
-//
-//        this.offset = parameters.getIndexBufferStart();
-//        this.indexCount = parameters.getVertexCount();
-//        this.vertexCount = parameters.getCount();
-//        this.indexType = parameters.getElementFormat();
-//        this.mode = parameters.getMode();
-//        this.sequentialIndices = parameters.hasNoIndexBuffer();
-//
-//        this.configureVertexBuffer(parameters, bytebuffer);
-//        this.configureIndexBuffer(parameters, bytebuffer);
-//
-//        bytebuffer.position(0);
-//
-//    }
-
-    private VertexFormat configureVertexBuffer(BufferBuilder.DrawArrayParameters parameters, ByteBuffer data) {
+    private VertexFormat configureVertexFormat(BufferBuilder.DrawArrayParameters parameters, ByteBuffer data) {
 //        boolean bl = !parameters.format().equals(this.vertexFormat);
-        if (!parameters.hasNoVertexBuffer() && vertexCount > 0) {
-            data.limit(offset);
+        if (!parameters.indexOnly()) {
 
             if(vertexBuffer == null) vertexBuffer = new VertexBuffer(data.remaining(), MemoryTypes.GPU_MEM);
             vertexBuffer.uploadWholeBuffer(data);
-
-            data.position(offset);
         }
-        return parameters.getVertexFormat();
+        return parameters.format();
     }
 
     private void configureIndexBuffer(BufferBuilder.DrawArrayParameters parameters, ByteBuffer data) {
-        if (parameters.hasNoIndexBuffer()) {
+        if (parameters.sequentialIndex()) {
             AutoIndexBuffer autoIndexBuffer;
             if(this.mode != VertexFormat.DrawMode.TRIANGLE_FAN) {
                 autoIndexBuffer = Drawer.getInstance().getQuadsIndexBuffer();
@@ -150,8 +73,6 @@ public class VBO {
             return;
         }
 
-        data.limit(parameters.getIndexBufferEnd());
-
         if(indexBuffer == null) indexBuffer = new IndexBuffer(data.remaining(), MemoryTypes.GPU_MEM);
         indexBuffer.uploadWholeBuffer(data);
     }
@@ -165,7 +86,7 @@ public class VBO {
             VRenderSystem.applyMVP(MV, P);
 
             Drawer drawer = Drawer.getInstance();
-            drawer.draw(vertexBuffer, indexBuffer, indexCount, mode.mode);
+            drawer.draw(vertexBuffer, indexBuffer, indexCount, mode.glMode);
 
             VRenderSystem.applyMVP(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix());
 
@@ -187,11 +108,7 @@ public class VBO {
     }
 
     public VertexFormat getFormat() {
-        return this.format;
+        return this.vertexFormat;
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-    }
 }
