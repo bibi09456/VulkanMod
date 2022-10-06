@@ -21,6 +21,9 @@ import java.util.Collections;
 public class Config {
 
     public int frameQueueSize = 2;
+    public VideoResolution resolution = VideoResolution.getFirstAvailable();
+    public boolean windowedFullscreen = false;
+    public boolean guiOptimizations = false;
 
     private static Path path;
 
@@ -42,8 +45,7 @@ public class Config {
             }
         }
         else {
-            config = new Config();
-            config.write();
+            config = null;
         }
 
         return config;
