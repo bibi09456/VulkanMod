@@ -167,6 +167,7 @@ public class Vulkan {
     private static VkExtent2D swapChainExtent;
     private static List<Long> swapChainImageViews;
     private static List<Long> swapChainFramebuffers;
+    public static boolean isBGRAformat = false;
 
     private static long depthImage;
     private static long depthImageMemory;
@@ -224,14 +225,9 @@ public class Vulkan {
 
         swapChainFramebuffers.forEach(framebuffer -> vkDestroyFramebuffer(device, framebuffer, null));
 
-//        swapChainImageViews.forEach(imageView -> vkDestroyImageView(device, imageView, null));
-
         MemoryManager.getInstance().freeImage(depthImage, depthImageMemory);
         vkDestroyImageView(device, depthImageView, null);
 
-//        vkDestroySwapchainKHR(device, swapChain, null);
-
-//        createSwapChain();
         createImageViews();
         createDepthResources();
         createFramebuffers();
@@ -419,7 +415,12 @@ public class Vulkan {
             }
 
             VkPhysicalDeviceFeatures deviceFeatures = VkPhysicalDeviceFeatures.callocStack(stack);
-            deviceFeatures.samplerAnisotropy(true);
+
+            //TODO store and use device features
+            if(deviceInfo.availableFeatures.samplerAnisotropy())
+                deviceFeatures.samplerAnisotropy(true);
+            if(deviceInfo.availableFeatures.logicOp())
+                deviceFeatures.logicOp(true);
 
             VkDeviceCreateInfo createInfo = VkDeviceCreateInfo.callocStack(stack);
 
@@ -514,6 +515,7 @@ public class Vulkan {
 
 //            IntBuffer imageCount = stack.ints(Math.max(swapChainSupport.capabilities.minImageCount(), 2));
             IntBuffer imageCount = stack.ints(frameQueueSize);
+//            IntBuffer imageCount = stack.ints(Math.max(swapChainSupport.capabilities.minImageCount(), frameQueueSize));
 
             if(swapChainSupport.capabilities.maxImageCount() > 0 && imageCount.get(0) > swapChainSupport.capabilities.maxImageCount()) {
                 imageCount.put(0, swapChainSupport.capabilities.maxImageCount());
@@ -572,7 +574,6 @@ public class Vulkan {
 
             vkGetSwapchainImagesKHR(device, swapChain, imageCount, pSwapchainImages);
 
-//            Validate.isTrue(imageCount.get(0) > 5);
             swapChainImages = new ArrayList<>(imageCount.get(0));
 
             for(int i = 0;i < pSwapchainImages.capacity();i++) {
@@ -741,22 +742,25 @@ public class Vulkan {
             }
         }
 
-        if(flag) System.out.println("Non-optimal surface format.");
+        if(format.format() == VK_FORMAT_B8G8R8A8_UNORM) isBGRAformat = true;
         return format;
     }
 
     private static int chooseSwapPresentMode(IntBuffer availablePresentModes) {
+        int requestedMode = vsync ? VK_PRESENT_MODE_FIFO_KHR : VK_PRESENT_MODE_IMMEDIATE_KHR;
 
-        //TODO: check if immediate mode is supported
         //fifo mode is the only mode that has to be supported
-//        for(int i = 0;i < availablePresentModes.capacity();i++) {
-//            if(availablePresentModes.get(i) == VK_PRESENT_MODE_MAILBOX_KHR) {
-//                return availablePresentModes.get(i);
-//            }
-//        }
-//
-//        return VK_PRESENT_MODE_FIFO_KHR;
-        return vsync ? VK_PRESENT_MODE_FIFO_KHR : VK_PRESENT_MODE_IMMEDIATE_KHR;
+        if(requestedMode == VK_PRESENT_MODE_FIFO_KHR) return VK_PRESENT_MODE_FIFO_KHR;
+
+        for(int i = 0;i < availablePresentModes.capacity();i++) {
+            if(availablePresentModes.get(i) == requestedMode) {
+                return requestedMode;
+            }
+        }
+
+        Initializer.LOGGER.warn("Requested mode not supported: using fallback VK_PRESENT_MODE_FIFO_KHR");
+        return VK_PRESENT_MODE_FIFO_KHR;
+
     }
 
     private static VkExtent2D chooseSwapExtent(VkSurfaceCapabilitiesKHR capabilities) {

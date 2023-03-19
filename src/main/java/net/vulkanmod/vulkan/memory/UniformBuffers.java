@@ -81,7 +81,9 @@ public class UniformBuffers {
         }
 
         public void uploadUBO(ByteBuffer buffer, int offset) {
-            MemoryManager.getInstance().Copy(this.data ,(data) -> VUtil.memcpy(data.getByteBuffer(0, (int) bufferSize), buffer, offset));
+//            MemoryManager.getInstance().Copy(this.data ,(data) -> VUtil.memcpy(data.getByteBuffer(0, (int) bufferSize), buffer, offset));
+            VUtil.memcpy(this.data.getByteBuffer(0, (int) bufferSize), buffer, offset);
+
         }
 
         private void resizeBuffer(int newSize) {
